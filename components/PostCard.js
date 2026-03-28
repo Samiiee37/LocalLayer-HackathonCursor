@@ -1,20 +1,22 @@
 import CategoryBadge from "./CategoryBadge";
+import { postCardSheetClasses } from "@/lib/categoryTheme";
 import { formatTime, truncate } from "@/lib/utils";
 
 /**
- * Sidebar row for one post — text, optional image, optional voice.
+ * Sidebar row for one post — text and voice; photos only appear on the map popup.
  */
 const shell = {
   default: "rounded-lg border border-[var(--border)] bg-[var(--panel)] p-3 shadow-sm",
   glass:
     "rounded-xl border border-white/10 bg-white/[0.04] p-4 shadow-lg shadow-black/20 backdrop-blur-md",
-  sheet:
-    "rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_2px_12px_rgba(15,23,42,0.06)]",
 };
 
 export default function PostCard({ post, variant = "default" }) {
-  const display = post.translatedEn || post.body;
+  const display = post.translatedEn || post.body || post.transcribedText;
   const hasText = typeof display === "string" && display.trim().length > 0;
+  const titleText = typeof post.title === "string" ? post.title.trim() : "";
+  const hasImage =
+    (Array.isArray(post.imageUrls) && post.imageUrls.length > 0) || !!post.imageUrl;
   const muted = variant === "glass" || variant === "sheet" ? "text-slate-500" : "text-slate-500 dark:text-slate-400";
   const bodyCls =
     variant === "glass"
@@ -23,9 +25,12 @@ export default function PostCard({ post, variant = "default" }) {
         ? "text-slate-800"
         : "text-slate-800 dark:text-slate-100";
 
+  const surfaceClass =
+    variant === "sheet" ? postCardSheetClasses(post) : shell[variant] ?? shell.default;
+
   return (
     <article
-      className={shell[variant] ?? shell.default}
+      className={surfaceClass}
       aria-labelledby={`post-${post._id}`}
     >
       <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -37,28 +42,31 @@ export default function PostCard({ post, variant = "default" }) {
           {formatTime(post.createdAt)}
         </time>
       </div>
+      {titleText ? (
+        <p
+          id={!hasText ? `post-${post._id}` : undefined}
+          className={`mb-1 text-base font-semibold leading-tight ${bodyCls}`}
+        >
+          {truncate(titleText, 100)}
+        </p>
+      ) : null}
       {hasText ? (
-        <p id={`post-${post._id}`} className={`text-sm leading-snug ${bodyCls}`}>
+        <p
+          id={titleText ? undefined : `post-${post._id}`}
+          className={`text-sm leading-snug ${bodyCls}`}
+        >
           {truncate(display, 220)}
         </p>
-      ) : (
+      ) : !titleText ? (
         <p id={`post-${post._id}`} className={`text-sm italic ${muted}`}>
-          {post.imageUrl && post.audioUrl
+          {hasImage && post.audioUrl
             ? "Photo and voice note"
-            : post.imageUrl
+            : hasImage
               ? "Photo"
               : post.audioUrl
                 ? "Voice note"
                 : "Post"}
         </p>
-      )}
-      {post.imageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={post.imageUrl}
-          alt=""
-          className="mt-2 max-h-48 w-full rounded-lg object-cover"
-        />
       ) : null}
       {post.audioUrl ? (
         <audio src={post.audioUrl} controls className="mt-2 h-9 w-full max-w-full" />

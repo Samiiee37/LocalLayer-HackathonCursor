@@ -20,6 +20,7 @@ export default function PostForm({
   onClose,
   variant = "default",
   generateUploadUrl,
+  getStorageReadUrl,
   onError,
 }) {
   const [category, setCategory] = useState("update");
@@ -129,27 +130,34 @@ export default function PostForm({
         audioId = await uploadFile(file);
       }
 
-      let translatedEn;
-      let sourceLang = "und";
-      if (body.trim()) {
-        const res = await fetch("/api/process", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: body }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Could not process text");
-        translatedEn = data.translatedEn;
-        sourceLang = data.sourceLang;
+      let imageUrl;
+      let audioUrl;
+      if (imageId && getStorageReadUrl) imageUrl = await getStorageReadUrl(imageId);
+      if (audioId && getStorageReadUrl) audioUrl = await getStorageReadUrl(audioId);
+
+      const res = await fetch("/api/process", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: body.trim(),
+          imageUrl: imageUrl || undefined,
+          audioUrl: audioUrl || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Could not process post");
       }
 
       await onSubmit({
+        title: data.title,
         body: body.trim(),
+        transcribedText: data.transcribedText || undefined,
         category,
         imageId,
         audioId,
-        translatedEn: translatedEn || undefined,
-        sourceLang,
+        translatedEn: data.translatedEn || undefined,
+        sourceLang: data.sourceLang ?? "und",
       });
 
       setBody("");
@@ -318,7 +326,7 @@ export default function PostForm({
           isGlass
             ? "rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-6 py-2.5 text-sm font-semibold text-slate-950 disabled:opacity-50"
             : isLight
-              ? "rounded-full bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+              ? "rounded-full bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-900/15 transition hover:bg-emerald-500 disabled:opacity-50"
               : "rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900"
         }
       >

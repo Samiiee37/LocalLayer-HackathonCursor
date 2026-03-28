@@ -3,8 +3,8 @@
  */
 const STYLES = {
   emergency: "bg-red-600 text-white",
-  update: "bg-amber-500 text-slate-900",
-  event: "bg-violet-600 text-white",
+  update: "bg-yellow-400 text-slate-900 ring-1 ring-yellow-600/30",
+  event: "bg-green-600 text-white",
 };
 
 const LABELS = {
@@ -13,13 +13,14 @@ const LABELS = {
   event: "Event",
 };
 
-export default function CategoryBadge({ category }) {
+export default function CategoryBadge({ category, compact = false }) {
   const cls = STYLES[category] || STYLES.update;
   const label = LABELS[category] || "Update";
+  const sizeCls = compact
+    ? "max-w-full rounded-full px-1.5 py-px text-[10px] leading-tight"
+    : "rounded-full px-2.5 py-0.5 text-xs";
   return (
-    <span
-      className={`inline-flex max-w-full items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}
-    >
+    <span className={`inline-flex items-center font-medium ${sizeCls} ${cls}`}>
       {label}
     </span>
   );

@@ -1,17 +1,20 @@
+import { Inter } from "next/font/google";
 import "@/styles/globals.css";
 
+const inter = Inter({ subsets: ["latin"] });
+
 export const metadata = {
-  title: "Live Local Layer",
-  description: "Real-time map-based local updates for emergencies, traffic, weather, and announcements.",
+  title: "LocalLayer",
+  description: "Real-time map-based local updates for emergencies, events, and community news.",
 };
 
 /**
- * Root layout: no heavy webfonts — system stack loads fast on low bandwidth.
+ * Root layout — Inter for marketing + app UI; map view uses its own full-viewport overflow.
  */
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className="h-full">
-      <body className="flex min-h-full flex-col overflow-hidden antialiased">{children}</body>
+      <body className={`${inter.className} flex min-h-full flex-col overflow-x-hidden antialiased`}>{children}</body>
     </html>
   );
 }

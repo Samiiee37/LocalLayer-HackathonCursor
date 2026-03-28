@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from "react-leaflet";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
-import CategoryBadge from "./CategoryBadge";
-import { truncate, kmBoxBounds, MAP_RADIUS_KM, MAP_RADIUS_METERS } from "@/lib/utils";
+import PostMapPopup from "./PostMapPopup";
+import { kmBoxBounds, MAP_RADIUS_KM, MAP_RADIUS_METERS } from "@/lib/utils";
 
 /**
  * Fix default marker assets in bundler environments (Next/Webpack).
@@ -58,6 +58,47 @@ function useUserLocationIcon() {
   );
 }
 
+/** Pin SVG — fill is category theme; stroke keeps yellow/green/red readable on light tiles. */
+function categoryPinHtml(fill, stroke = "rgba(15, 23, 42, 0.45)") {
+  return `<svg width="30" height="38" viewBox="0 0 30 38" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path fill="${fill}" stroke="${stroke}" stroke-width="1.35" stroke-linejoin="round"
+      d="M15 1.75c6.77 0 12.25 5.35 12.25 11.95 0 9.2-12.25 20.55-12.25 20.55S2.75 22.9 2.75 13.7C2.75 7.1 8.23 1.75 15 1.75z"/>
+    <circle cx="15" cy="14" r="4.25" fill="white" opacity="0.95"/>
+  </svg>`;
+}
+
+const CATEGORY_PIN = {
+  emergency: { fill: "#dc2626", stroke: "#7f1d1d" },
+  update: { fill: "#eab308", stroke: "#713f12" },
+  event: { fill: "#16a34a", stroke: "#14532d" },
+};
+
+function nearSame(a, b) {
+  return Math.abs(a - b) < 1e-5;
+}
+
+/** One Leaflet divIcon per category — stable instances avoid marker flicker on re-render. */
+function useCategoryPostIcons() {
+  return useMemo(() => {
+    const size = [30, 38];
+    const anchor = [15, 38];
+    const popupAnchor = [0, -34];
+    const mk = (key) =>
+      L.divIcon({
+        className: "ll-post-pin",
+        html: categoryPinHtml(CATEGORY_PIN[key].fill, CATEGORY_PIN[key].stroke),
+        iconSize: size,
+        iconAnchor: anchor,
+        popupAnchor,
+      });
+    return {
+      emergency: mk("emergency"),
+      update: mk("update"),
+      event: mk("event"),
+    };
+  }, []);
+}
+
 export default function MapView({
   initialCenter,
   initialZoom,
@@ -68,6 +109,7 @@ export default function MapView({
 }) {
   useDefaultIcons();
   const userIcon = useUserLocationIcon();
+  const postIcons = useCategoryPostIcons();
 
   const accuracyRadius =
     typeof pickLatLng?.accuracyMeters === "number" ? pickLatLng.accuracyMeters : 75;
@@ -81,6 +123,72 @@ export default function MapView({
     return L.latLngBounds(b.southWest, b.northEast);
   }, [rLat, rLng]);
 
+  /** OSRM path + destination; line color follows post category. */
+  const [activeRoute, setActiveRoute] = useState(null);
+  const [directionsLoadingId, setDirectionsLoadingId] = useState(null);
+
+  const handleDirections = useCallback(
+    async (post, catKey) => {
+      if (!pickLatLng) return;
+      if (
+        activeRoute &&
+        nearSame(activeRoute.destLat, post.lat) &&
+        nearSame(activeRoute.destLng, post.lng)
+      ) {
+        setActiveRoute(null);
+        return;
+      }
+      setDirectionsLoadingId(post._id);
+      try {
+        const q = new URLSearchParams({
+          lat1: String(pickLatLng.lat),
+          lng1: String(pickLatLng.lng),
+          lat2: String(post.lat),
+          lng2: String(post.lng),
+        });
+        const res = await fetch(`/api/directions?${q}`);
+        const data = res.ok ? await res.json() : null;
+        let positions;
+        if (data?.code === "Ok" && data.routes?.[0]?.geometry?.coordinates?.length) {
+          positions = data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+        } else {
+          positions = [
+            [pickLatLng.lat, pickLatLng.lng],
+            [post.lat, post.lng],
+          ];
+        }
+        setActiveRoute({
+          positions,
+          categoryKey: catKey,
+          destLat: post.lat,
+          destLng: post.lng,
+        });
+      } catch {
+        setActiveRoute({
+          positions: [
+            [pickLatLng.lat, pickLatLng.lng],
+            [post.lat, post.lng],
+          ],
+          categoryKey: catKey,
+          destLat: post.lat,
+          destLng: post.lng,
+        });
+      } finally {
+        setDirectionsLoadingId(null);
+      }
+    },
+    [pickLatLng, activeRoute],
+  );
+
+  const routeColor =
+    activeRoute && CATEGORY_PIN[activeRoute.categoryKey]
+      ? CATEGORY_PIN[activeRoute.categoryKey].fill
+      : "#64748b";
+
+  useEffect(() => {
+    if (!pickLatLng) setActiveRoute(null);
+  }, [pickLatLng]);
+
   return (
     <MapContainer
       center={initialCenter}
@@ -91,40 +199,57 @@ export default function MapView({
       maxBoundsViscosity={limitBounds ? 1 : undefined}
     >
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
       />
       <RecenterMap lat={rLat} lng={rLng} zoom={recenterZoom} recenterTick={recenterTick} />
 
+      {activeRoute?.positions?.length ? (
+        <>
+          <Polyline
+            interactive={false}
+            positions={activeRoute.positions}
+            pathOptions={{
+              color: routeColor,
+              weight: 12,
+              opacity: 0.2,
+              lineCap: "round",
+              lineJoin: "round",
+            }}
+          />
+          <Polyline
+            interactive={false}
+            positions={activeRoute.positions}
+            pathOptions={{
+              color: routeColor,
+              weight: 5,
+              opacity: 0.92,
+              lineCap: "round",
+              lineJoin: "round",
+            }}
+          />
+        </>
+      ) : null}
+
       {posts.map((p) => {
-        const text = p.translatedEn || p.body;
-        const hasText = typeof text === "string" && text.trim().length > 0;
+        const catKey = postIcons[p.category] ? p.category : "update";
+        const pinIcon = postIcons[catKey];
+        const routeToThis =
+          activeRoute &&
+          nearSame(activeRoute.destLat, p.lat) &&
+          nearSame(activeRoute.destLng, p.lng);
+        const loadingThis = directionsLoadingId === p._id;
         return (
-          <Marker key={p._id} position={[p.lat, p.lng]}>
-            <Popup>
-              <div className="max-w-[220px]">
-                <CategoryBadge category={p.category} />
-                {hasText ? (
-                  <p className="mt-1 text-sm">{truncate(text, 280)}</p>
-                ) : (
-                  <p className="mt-1 text-sm text-slate-500">
-                    {p.imageUrl && p.audioUrl
-                      ? "Photo and voice"
-                      : p.imageUrl
-                        ? "Photo"
-                        : p.audioUrl
-                          ? "Voice note"
-                          : "Post"}
-                  </p>
-                )}
-                {p.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.imageUrl} alt="" className="mt-2 max-h-28 w-full rounded object-cover" />
-                ) : null}
-                {p.audioUrl ? (
-                  <audio src={p.audioUrl} controls className="mt-2 h-8 w-full" />
-                ) : null}
-              </div>
+          <Marker key={p._id} position={[p.lat, p.lng]} icon={pinIcon}>
+            <Popup className={`ll-popup ll-popup--${catKey}`} maxWidth={280} minWidth={210}>
+              <PostMapPopup
+                post={p}
+                catKey={catKey}
+                pickLatLng={pickLatLng}
+                onDirections={() => void handleDirections(p, catKey)}
+                directionsLoading={loadingThis}
+                routeToThis={routeToThis}
+              />
             </Popup>
           </Marker>
         );
@@ -137,23 +262,23 @@ export default function MapView({
             center={[pickLatLng.lat, pickLatLng.lng]}
             radius={MAP_RADIUS_METERS}
             pathOptions={{
-              color: "#0f172a",
-              weight: 1.5,
-              opacity: 0.45,
+              color: "#475569",
+              weight: 1.25,
+              opacity: 0.5,
               fillColor: "#64748b",
-              fillOpacity: 0.06,
-              dashArray: "10 12",
+              fillOpacity: 0.05,
+              dashArray: "10 14",
             }}
           />
           <Circle
             center={[pickLatLng.lat, pickLatLng.lng]}
             radius={accuracyRadius}
             pathOptions={{
-              color: "#3b82f6",
+              color: "#059669",
               weight: 1.5,
-              opacity: 0.45,
-              fillColor: "#3b82f6",
-              fillOpacity: 0.1,
+              opacity: 0.55,
+              fillColor: "#10b981",
+              fillOpacity: 0.12,
             }}
           />
           <Marker
@@ -162,11 +287,13 @@ export default function MapView({
             icon={userIcon}
             zIndexOffset={2000}
           >
-            <Popup>
-              <strong className="text-slate-800">Your GPS position</strong>
-              <p className="mt-1 text-sm text-slate-600">
-                Map is limited to {MAP_RADIUS_KM} km from here. Posts outside this radius are hidden.
-              </p>
+            <Popup className="ll-popup ll-popup--location" maxWidth={200}>
+              <div className="ll-popup-inner ll-popup-inner--location">
+                <p className="ll-popup-title ll-popup-title--location">Your position</p>
+                <p className="ll-popup-body ll-popup-body--subtle">
+                  Map shows posts within {MAP_RADIUS_KM} km. Pins outside that radius stay hidden.
+                </p>
+              </div>
             </Popup>
           </Marker>
         </>

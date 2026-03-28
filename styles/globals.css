@@ -42,14 +42,36 @@ body {
 }
 
 .leaflet-control-attribution {
-  background: rgba(255, 255, 255, 0.92) !important;
-  color: rgba(15, 23, 42, 0.75) !important;
-  font-size: 10px !important;
-  border-radius: 8px 0 0 0 !important;
-  box-shadow: 0 -1px 8px rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.94) !important;
+  color: rgba(15, 23, 42, 0.72) !important;
+  font-size: 9px !important;
+  line-height: 1.35 !important;
+  max-width: min(52vw, 220px) !important;
+  padding: 4px 8px !important;
+  border-radius: 10px !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(15, 23, 42, 0.06) !important;
 }
 .leaflet-control-attribution a {
   color: #0f172a !important;
+}
+
+/* Keep attribution readable above bottom sheet on map screen */
+.ll-map-full .leaflet-bottom.leaflet-right {
+  left: 8px;
+  right: auto;
+  bottom: min(46vh, 420px);
+}
+@media (min-width: 640px) {
+  .ll-map-full .leaflet-bottom.leaflet-right {
+    bottom: min(46vh, 420px);
+  }
+}
+
+/* Category pins (SVG inside divIcon) — no default tile background. */
+.ll-post-pin {
+  background: transparent !important;
+  border: none !important;
 }
 
 /* “My location” — blue dot + pulse so it’s obvious vs post pins (default Leaflet markers). */
@@ -61,24 +83,26 @@ body {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 16px;
-  height: 16px;
-  margin: -8px 0 0 -8px;
+  width: 17px;
+  height: 17px;
+  margin: -8.5px 0 0 -8.5px;
   border-radius: 50%;
-  background: #0f172a;
+  background: #059669;
   border: 3px solid #ffffff;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(5, 150, 105, 0.35),
+    0 2px 10px rgba(0, 0, 0, 0.28);
   z-index: 2;
 }
 .ll-user-pulse {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 40px;
-  height: 40px;
-  margin: -20px 0 0 -20px;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
   border-radius: 50%;
-  background: rgba(15, 23, 42, 0.12);
+  background: rgba(16, 185, 129, 0.18);
   animation: ll-loc-pulse 2.2s ease-out infinite;
   z-index: 1;
 }
@@ -91,4 +115,328 @@ body {
     transform: scale(1.35);
     opacity: 0;
   }
+}
+
+/* —— Map post popups: themed chrome + card body (Leaflet overrides) —— */
+.leaflet-popup.ll-popup {
+  margin-bottom: 8px;
+}
+
+.leaflet-popup.ll-popup .leaflet-popup-content {
+  margin: 0;
+  min-width: 0;
+  line-height: 1.4;
+}
+
+.leaflet-popup.ll-popup .leaflet-popup-content-wrapper {
+  padding: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow:
+    0 16px 40px rgba(15, 23, 42, 0.16),
+    0 0 0 1px rgba(15, 23, 42, 0.07);
+}
+
+.leaflet-popup.ll-popup .leaflet-popup-tip {
+  border-radius: 2px;
+}
+
+/* Emergency — red */
+.leaflet-popup.ll-popup--emergency .leaflet-popup-content-wrapper {
+  background: linear-gradient(165deg, rgba(254, 242, 242, 0.97) 0%, #ffffff 52%);
+  border: 1px solid rgba(220, 38, 38, 0.28);
+}
+.leaflet-popup.ll-popup--emergency .leaflet-popup-tip {
+  background: #ffffff;
+  border: 1px solid rgba(220, 38, 38, 0.22);
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.08);
+}
+.leaflet-popup.ll-popup--emergency .leaflet-popup-close-button:hover {
+  background: rgba(220, 38, 38, 0.12);
+  color: #991b1b;
+}
+
+/* Update — yellow / amber */
+.leaflet-popup.ll-popup--update .leaflet-popup-content-wrapper {
+  background: linear-gradient(165deg, rgba(254, 252, 232, 0.98) 0%, #ffffff 52%);
+  border: 1px solid rgba(234, 179, 8, 0.4);
+}
+.leaflet-popup.ll-popup--update .leaflet-popup-tip {
+  background: #ffffff;
+  border: 1px solid rgba(180, 83, 9, 0.2);
+  box-shadow: 0 2px 6px rgba(234, 179, 8, 0.12);
+}
+.leaflet-popup.ll-popup--update .leaflet-popup-close-button:hover {
+  background: rgba(234, 179, 8, 0.2);
+  color: #713f12;
+}
+
+/* Event — green */
+.leaflet-popup.ll-popup--event .leaflet-popup-content-wrapper {
+  background: linear-gradient(165deg, rgba(240, 253, 244, 0.97) 0%, #ffffff 52%);
+  border: 1px solid rgba(22, 163, 74, 0.3);
+}
+.leaflet-popup.ll-popup--event .leaflet-popup-tip {
+  background: #ffffff;
+  border: 1px solid rgba(20, 83, 45, 0.2);
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.1);
+}
+.leaflet-popup.ll-popup--event .leaflet-popup-close-button:hover {
+  background: rgba(22, 163, 74, 0.12);
+  color: #14532d;
+}
+
+/* GPS / neutral */
+.leaflet-popup.ll-popup--location .leaflet-popup-content-wrapper {
+  background: linear-gradient(165deg, #f8fafc 0%, #ffffff 55%);
+  border: 1px solid rgba(59, 130, 246, 0.22);
+}
+.leaflet-popup.ll-popup--location .leaflet-popup-tip {
+  background: #ffffff;
+  border: 1px solid rgba(59, 130, 246, 0.18);
+}
+.leaflet-popup.ll-popup--location .leaflet-popup-close-button:hover {
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
+}
+
+.leaflet-popup.ll-popup .leaflet-popup-close-button {
+  width: 22px;
+  height: 22px;
+  top: 5px;
+  right: 5px;
+  padding: 0;
+  font:
+    16px/20px system-ui,
+    sans-serif;
+  color: #64748b;
+  border-radius: 6px;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.leaflet-popup.ll-popup .leaflet-popup-close-button:hover {
+  color: #0f172a;
+}
+
+/* Inner card (React content) */
+.ll-popup-inner {
+  padding: 9px 26px 9px 9px;
+}
+
+.ll-popup-inner--emergency {
+  border-top: 2px solid #dc2626;
+}
+
+.ll-popup-inner--update {
+  border-top: 2px solid #ca8a04;
+}
+
+.ll-popup-inner--event {
+  border-top: 2px solid #16a34a;
+}
+
+.ll-popup-inner--location {
+  padding: 9px 26px 9px 9px;
+  border-top: 2px solid #3b82f6;
+}
+
+.ll-popup-head {
+  margin-bottom: 4px;
+}
+
+.ll-popup-lang-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.ll-popup-lang-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.ll-popup-lang-select {
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  border-radius: 6px;
+  border: 1px solid rgba(15, 23, 42, 0.15);
+  background: #fff;
+  padding: 4px 6px;
+  font-size: 11px;
+  line-height: 1.3;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.ll-popup-lang-select:focus {
+  outline: 2px solid rgba(59, 130, 246, 0.35);
+  outline-offset: 0;
+}
+
+.ll-popup-translating {
+  margin: 0 0 4px;
+  font-size: 10px;
+  font-style: italic;
+  color: #64748b;
+}
+
+.ll-popup-title {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  color: #0f172a;
+}
+
+.ll-popup-title--location {
+  margin-bottom: 2px;
+  font-size: 12px;
+}
+
+.ll-popup-body {
+  margin: 0;
+  font-size: 12px;
+  color: #334155;
+  line-height: 1.4;
+}
+
+.ll-popup-body--subtle {
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.ll-popup-muted {
+  margin: 0;
+  font-size: 11px;
+  font-style: italic;
+  color: #94a3b8;
+}
+
+/* Stacked photos for the same event — fixed height, scroll inside (popup size stays the same). */
+.ll-popup-images-scroll {
+  margin-top: 6px;
+  max-height: 80px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-right: 2px;
+}
+
+.ll-popup-images-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.ll-popup-images-scroll::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background: rgba(15, 23, 42, 0.22);
+}
+
+.ll-popup-gallery-img {
+  display: block;
+  width: 100%;
+  max-height: 52px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  object-fit: cover;
+  box-shadow: 0 1px 6px rgba(15, 23, 42, 0.08);
+}
+
+.ll-popup-audio {
+  margin-top: 7px;
+  height: 28px;
+  width: 100%;
+  vertical-align: middle;
+  border-radius: 6px;
+}
+
+.ll-popup-actions {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.ll-popup-directions {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    opacity 0.15s ease,
+    transform 0.1s ease;
+}
+
+.ll-popup-directions:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.ll-popup-directions:not(:disabled):active {
+  transform: scale(0.98);
+}
+
+.ll-popup-directions--emergency {
+  border: 1px solid rgba(220, 38, 38, 0.45);
+  background: rgba(254, 242, 242, 0.9);
+  color: #991b1b;
+}
+
+.ll-popup-directions--emergency:not(:disabled):hover {
+  background: rgba(254, 202, 202, 0.95);
+}
+
+.ll-popup-directions--update {
+  border: 1px solid rgba(202, 138, 4, 0.5);
+  background: rgba(254, 249, 195, 0.85);
+  color: #713f12;
+}
+
+.ll-popup-directions--update:not(:disabled):hover {
+  background: rgba(253, 230, 138, 0.95);
+}
+
+.ll-popup-directions--event {
+  border: 1px solid rgba(22, 163, 74, 0.45);
+  background: rgba(240, 253, 244, 0.95);
+  color: #14532d;
+}
+
+.ll-popup-directions--event:not(:disabled):hover {
+  background: rgba(187, 247, 208, 0.95);
+}
+
+/* Landing page — subtle grid on black (hero + CTA band). */
+.ll-landing-grid {
+  background-color: #000;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 48px 48px;
+  background-position: center top;
+}
+
+.ll-landing-cta {
+  background-color: #0a0a0a;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
 }
