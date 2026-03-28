@@ -26,8 +26,8 @@ Hyperlocal community layer on a live map: post **emergencies**, **updates**, and
 
 | Layer | Choice |
 |--------|--------|
-| **Frontend** | [Next.js](https://nextjs.org) (App Router), React 19, Tailwind CSS v4 |
-| **Maps** | [Leaflet](https://leafletjs.com/) + `react-leaflet` |
+| **Frontend** | [v0](https://v0.app/) [Next.js](https://nextjs.org) (App Router), React 19, Tailwind CSS v4 | V0 to generate landing page
+| **Maps** | [mobbin](https://mobbin.com/discover/apps/ios/latest) [Leaflet](https://leafletjs.com/) + `react-leaflet` | mobbin for map page UI motivation |
 | **Backend / data** | [Convex](https://convex.dev) — queries, mutations, file storage, scheduled jobs |
 | **AI (server-only)** | [Groq](https://groq.com) — Whisper + chat models for processing posts (`/api/process`) |
 | **Web Q&A** | [Exa](https://exa.ai) — `/answer`-style responses (`/api/exa/answer`) |
