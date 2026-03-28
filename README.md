@@ -1,3 +1,33 @@
+# BUILD FOR THE NEXT BILLION
+
+Billions of people are still waiting for technology that actually works for them—in their language, in their context, for their problems.
+
+**Our mission:** Build something that matters at scale.
+
+## What problems it solves
+
+- **Trust and speed where it counts:** Neighbors need to see **emergencies**, **updates**, and **events** near them without wading through global noise. LocalLayer keeps the lens **hyperlocal** (e.g. a fixed radius) so signal stays relevant.
+- **Barriers to participation:** Not everyone types long posts. **Voice notes**, **photos**, and automatic **transcription / summaries** lower the friction to share what matters.
+- **Language:** Information should be readable in the language people prefer. Popup **translation** and multi-language display options help bridge English-centric defaults and local needs.
+- **Situational awareness:** **Directions** to a pin and a visible **emergency flash** for others nearby make time-sensitive information actionable, not just a feed item.
+- **Grounded facts:** **Web search (Exa)** answers questions with **cited sources**, so people can verify against the open web—not only model guesses.
+
+## Why this is scalable
+
+- **Same pattern, many places:** Any community with a map + radius can reuse the model; **Convex** handles real-time data and storage so you are not rebuilding sync and uploads per city.
+- **Server-side AI:** **Groq** and **Exa** run behind **Next.js API routes**—keys stay safe, and you can swap models or providers without rewriting the client.
+- **Lightweight map stack:** **Leaflet** runs on modest devices and networks—important where “the next billion” actually lives.
+- **Operational simplicity:** Scheduled cleanup and a clear **landing vs app** split keep the system maintainable as usage grows.
+
+## How it can impact a large number of people
+
+- **Many local layers, one architecture:** Rolling out new areas is primarily a **deployment and configuration** problem, not a rewrite—so reach can grow faster than team size.
+- **Inclusive input:** Voice-first and visual posts include users who are less comfortable with keyboards or formal writing—widening who can participate.
+- **Faster collective response:** When emergencies surface **only to people in range**, communities can coordinate sooner; **cited web answers** reduce rumor and confusion on factual questions.
+- **Open web as backstop:** Pairing local posts with **Exa**-grounded answers connects hyperlocal reality to broader knowledge when people need both.
+
+---
+
 # LocalLayer
 
 Hyperlocal community layer on a live map: post **emergencies**, **updates**, and **events** within a fixed radius, with voice and photos, real-time sync, and optional web-grounded answers.
