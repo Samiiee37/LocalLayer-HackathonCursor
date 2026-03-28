@@ -32,6 +32,8 @@ Billions of people are still waiting for technology that actually works for them
 
 Hyperlocal community layer on a live map: post **emergencies**, **updates**, and **events** within a fixed radius, with voice and photos, real-time sync, and optional web-grounded answers.
 
+The whole project was built using **[Cursor](https://cursor.com)** for prototyping—map UI, Convex backend, Next.js routes, and integrations were iterated in the editor with AI-assisted development.
+
 ---
 
 ## Features
