@@ -14,9 +14,11 @@ import {
   featuredLabelClasses,
 } from "@/lib/categoryTheme";
 import {
+  distanceMeters,
   geolocationPositionToPin,
   HIGH_ACCURACY_GEO_OPTIONS,
   MAP_RADIUS_KM,
+  MAP_RADIUS_METERS,
   truncate,
 } from "@/lib/utils";
 
@@ -87,10 +89,67 @@ function MapShell() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const hasReceivedFixRef = useRef(false);
 
+  /** Tracks emergency post ids we’ve already seen — `null` until first snapshot after load / list mode change. */
+  const seenEmergencyIdsRef = useRef(null);
+  /** Convex post id — skip red flash for the author’s own new emergency. */
+  const skipEmergencyFlashForIdRef = useRef(null);
+  const postsListModeRef = useRef(null);
+  const [emergencyFlashGen, setEmergencyFlashGen] = useState(0);
+  const [emergencyFlashVisible, setEmergencyFlashVisible] = useState(false);
+
   const filteredPosts = useMemo(() => {
     if (categoryFilter === "all") return posts;
     return posts.filter((p) => p.category === categoryFilter);
   }, [posts, categoryFilter]);
+
+  /**
+   * Other users’ new emergency posts → red flash only if this viewer has GPS and the post is
+   * within MAP_RADIUS_METERS (same 5 km layer as the map).
+   */
+  useEffect(() => {
+    if (isLoading) return;
+
+    const mode = pickLatLng != null ? "nearby" : "all";
+    if (postsListModeRef.current !== mode) {
+      postsListModeRef.current = mode;
+      seenEmergencyIdsRef.current = null;
+    }
+
+    const emergencies = posts.filter((p) => p.category === "emergency");
+    const ids = new Set(emergencies.map((p) => p._id));
+    const prev = seenEmergencyIdsRef.current;
+
+    if (prev === null) {
+      seenEmergencyIdsRef.current = ids;
+      return;
+    }
+
+    const viewerInRangeLayer = pickLatLng != null;
+
+    for (const id of ids) {
+      if (!prev.has(id)) {
+        const post = posts.find((p) => p._id === id);
+        const emergencyWithin5km =
+          viewerInRangeLayer &&
+          post != null &&
+          distanceMeters(pickLatLng.lat, pickLatLng.lng, post.lat, post.lng) <= MAP_RADIUS_METERS;
+
+        if (skipEmergencyFlashForIdRef.current === id) {
+          skipEmergencyFlashForIdRef.current = null;
+        } else if (emergencyWithin5km) {
+          setEmergencyFlashGen((g) => g + 1);
+          setEmergencyFlashVisible(true);
+        }
+        break;
+      }
+    }
+
+    if (skipEmergencyFlashForIdRef.current != null && prev.has(skipEmergencyFlashForIdRef.current)) {
+      skipEmergencyFlashForIdRef.current = null;
+    }
+
+    seenEmergencyIdsRef.current = ids;
+  }, [posts, isLoading, pickLatLng]);
 
   useEffect(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
@@ -163,7 +222,7 @@ function MapShell() {
     setBusy(true);
     setHint(null);
     try {
-      await createPost({
+      const newId = await createPost({
         title: payload.title,
         body: payload.body ?? "",
         transcribedText: payload.transcribedText,
@@ -175,6 +234,9 @@ function MapShell() {
         lat: pickLatLng.lat,
         lng: pickLatLng.lng,
       });
+      if (payload.category === "emergency") {
+        skipEmergencyFlashForIdRef.current = newId;
+      }
       setComposerOpen(false);
     } catch (e) {
       const msg = e?.message || "Something went wrong";
@@ -197,6 +259,17 @@ function MapShell() {
 
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-slate-950 text-slate-900">
+      {emergencyFlashVisible ? (
+        <div
+          key={emergencyFlashGen}
+          className="ll-emergency-flash-overlay pointer-events-none fixed inset-0 z-[5000]"
+          onAnimationEnd={(e) => {
+            if (e.target === e.currentTarget) setEmergencyFlashVisible(false);
+          }}
+          aria-hidden
+        />
+      ) : null}
+
       <div className="relative min-h-0 flex-1">
         <div className="absolute inset-0 z-0">
           <MapView
