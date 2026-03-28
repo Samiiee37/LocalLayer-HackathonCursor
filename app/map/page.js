@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ConvexProvider } from "convex/react";
 import { convex } from "@/lib/convexClient";
 import { usePosts } from "@/hooks/usePosts";
+import ExaSearchPanel from "@/components/ExaSearchPanel";
 import PostForm from "@/components/PostForm";
 import PostCard from "@/components/PostCard";
 import {
@@ -48,6 +49,14 @@ function IconHome(props) {
   );
 }
 
+function IconSearch(props) {
+  return (
+    <svg className={props.className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    </svg>
+  );
+}
+
 function IconLocate(props) {
   return (
     <svg className={props.className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
@@ -86,6 +95,7 @@ function MapShell() {
   const [busy, setBusy] = useState(false);
   const [recenterTick, setRecenterTick] = useState(0);
   const [composerOpen, setComposerOpen] = useState(false);
+  const [exaSearchOpen, setExaSearchOpen] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const hasReceivedFixRef = useRef(false);
 
@@ -258,7 +268,7 @@ function MapShell() {
   const listPosts = filteredPosts.slice(1);
 
   return (
-    <div className="flex h-[100dvh] flex-col overflow-hidden bg-slate-950 text-slate-900">
+    <div className="flex h-[100dvh] flex-col overflow-hidden bg-slate-950 text-slate-900 lg:flex-row">
       {emergencyFlashVisible ? (
         <div
           key={emergencyFlashGen}
@@ -270,6 +280,7 @@ function MapShell() {
         />
       ) : null}
 
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
       <div className="relative min-h-0 flex-1">
         <div className="absolute inset-0 z-0">
           <MapView
@@ -295,13 +306,26 @@ function MapShell() {
           ) : null}
 
           <div className="flex items-start justify-between gap-2">
-            <Link
-              href="/"
-              className="pointer-events-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-900/90 text-zinc-100 shadow-lg shadow-black/25 ring-1 ring-white/10 backdrop-blur-md transition hover:bg-slate-800 active:scale-[0.97]"
-              aria-label="Back to home"
-            >
-              <IconHome className="h-5 w-5" />
-            </Link>
+            <div className="pointer-events-auto flex shrink-0 gap-2">
+              <Link
+                href="/"
+                className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900/90 text-zinc-100 shadow-lg shadow-black/25 ring-1 ring-white/10 backdrop-blur-md transition hover:bg-slate-800 active:scale-[0.97]"
+                aria-label="Back to home"
+              >
+                <IconHome className="h-5 w-5" />
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  setComposerOpen(false);
+                  setExaSearchOpen(true);
+                }}
+                className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900/90 text-zinc-100 shadow-lg shadow-black/25 ring-1 ring-white/10 backdrop-blur-md transition hover:bg-slate-800 active:scale-[0.97] lg:hidden"
+                aria-label="Web search with Exa"
+              >
+                <IconSearch className="h-5 w-5" />
+              </button>
+            </div>
 
             <div className="pointer-events-auto flex min-w-0 flex-1 justify-center">
               <div
@@ -324,7 +348,10 @@ function MapShell() {
 
             <button
               type="button"
-              onClick={() => setComposerOpen(true)}
+              onClick={() => {
+                setExaSearchOpen(false);
+                setComposerOpen(true);
+              }}
               className="pointer-events-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500 text-lg font-light leading-none text-white shadow-lg shadow-emerald-950/50 ring-2 ring-white/25 transition hover:bg-emerald-400 active:scale-[0.97]"
               aria-label="New post"
             >
@@ -474,6 +501,9 @@ function MapShell() {
           </div>
         </div>
       ) : null}
+      </div>
+
+      <ExaSearchPanel open={exaSearchOpen} onClose={() => setExaSearchOpen(false)} />
     </div>
   );
 }

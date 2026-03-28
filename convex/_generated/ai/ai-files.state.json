@@ -9,5 +9,6 @@
     "convex-performance-audit",
     "convex-quickstart",
     "convex-setup-auth"
-  ]
+  ],
+  "codexSsg": true
 }
