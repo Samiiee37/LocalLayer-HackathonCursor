@@ -1,0 +1,94 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --panel: #ffffff;
+  --border: #e2e8f0;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0f172a;
+    --foreground: #f1f5f9;
+    --panel: #1e293b;
+    --border: #334155;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Full-bleed map (Pangea-style rectangular viewport). */
+.ll-map-full.leaflet-container {
+  border-radius: 0;
+}
+
+/* WHY: Leaflet needs explicit height; flex layout keeps the map usable on short viewports. */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  z-index: 0;
+}
+
+.leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.92) !important;
+  color: rgba(15, 23, 42, 0.75) !important;
+  font-size: 10px !important;
+  border-radius: 8px 0 0 0 !important;
+  box-shadow: 0 -1px 8px rgba(0, 0, 0, 0.06);
+}
+.leaflet-control-attribution a {
+  color: #0f172a !important;
+}
+
+/* “My location” — blue dot + pulse so it’s obvious vs post pins (default Leaflet markers). */
+.ll-user-marker {
+  background: transparent !important;
+  border: none !important;
+}
+.ll-user-dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: 50%;
+  background: #0f172a;
+  border: 3px solid #ffffff;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+  z-index: 2;
+}
+.ll-user-pulse {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.12);
+  animation: ll-loc-pulse 2.2s ease-out infinite;
+  z-index: 1;
+}
+@keyframes ll-loc-pulse {
+  0% {
+    transform: scale(0.55);
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+}
